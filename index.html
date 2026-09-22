@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#090b10">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Java League — Путь до Junior Java Developer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- Десктопный сайдбар -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">
+          <span>J</span>
+          <div class="brand-glow"></div>
+        </div>
+        <div class="brand-text">
+          <strong>Java League</strong>
+          <span>2 друга · 1 цель</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="dashboard">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Главная</span>
+        </button>
+        <button class="nav-item" data-section="roadmap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <span>Roadmap</span>
+        </button>
+        <button class="nav-item" data-section="weeks">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Недели</span>
+          <span class="badge" id="sidebarWeeksBadge">0/45</span>
+        </button>
+        <button class="nav-item" data-section="projects">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          <span>Проекты</span>
+        </button>
+        <button class="nav-item" data-section="scores">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path>
+            <path d="M14 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+          </svg>
+          <span>Баттл (XP)</span>
+        </button>
+        <button class="nav-item" data-section="rules">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Система</span>
+        </button>
+      </nav>
+
+      <!-- Индикатор синхронизации с бэкендом -->
+      <div class="sync-status" id="syncStatus">
+        <span class="sync-dot"></span>
+        <span class="sync-text" id="syncText">Проверка сервера...</span>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-header">
+          <span class="small-label">СЕГОДНЯ</span>
+          <span class="sidebar-date" id="todayDate">—</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" id="todayProgress"></div>
+          </div>
+          <span class="progress-text" id="todayProgressText">0 / 3 задач</span>
+        </div>
+        <small class="sidebar-hint">2 часа практики каждый день ведут к офферу.</small>
+      </div>
+    </aside>
+
+    <!-- Основное содержимое -->
+    <main class="main">
+      <!-- Мобильный / Десктопный верхний бар -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="mobile-brand">
+            <div class="brand-mark mini">J</div>
+            <span class="brand-name">Java League</span>
+          </div>
+          <div class="topbar-title-wrap">
+            <div class="eyebrow">
+              <span class="pulse-indicator"></span>
+              ROADMAP TO JUNIOR
+            </div>
+            <h1 id="pageTitle">Java League</h1>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-btn" id="soundToggleBtn" title="Звук таймера">
+            <span id="soundIcon">🔊</span>
+          </button>
+          <button class="ghost-btn" id="resetBtn" title="Сбросить прогресс">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>Сброс</span>
+          </button>
+          <button class="primary-btn focus-action-btn" id="focusBtn">
+            <span class="btn-play-icon">▶</span>
+            <span id="focusBtnText">Начать 2 часа</span>
+            <span class="focus-timer-mini" id="topTimerDisplay">02:00:00</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- СЕКЦИЯ: ГЛАВНАЯ (DASHBOARD) -->
+      <section id="dashboard" class="page active">
+        <div class="hero">
+          <div class="hero-content">
+            <div class="hero-badge-row">
+              <span class="pill gold-pill">С нуля → Junior Java Developer</span>
+              <span class="pill glass-pill" id="heroStreak">🔥 45 недель фокуса</span>
+            </div>
+            <h2>Учитесь вместе.<br><span class="gradient-text">Стройте руками.</span></h2>
+            <p>2 часа в день · реальный проект каждую неделю · code review друг друга · честный счетчик XP.</p>
+            <div class="hero-actions">
+              <button class="primary-btn hero-btn" data-goto="weeks">Перейти к неделям →</button>
+              <button class="ghost-btn hero-btn" id="openTimerOverlayBtn">⏱ Фокус-режим</button>
+            </div>
+          </div>
+          <div class="hero-code-wrap">
+            <div class="hero-code">
+              <div class="code-header">
+                <div class="code-dot red"></div>
+                <div class="code-dot yellow"></div>
+                <div class="code-dot green"></div>
+                <span class="code-filename">JavaLeague.java</span>
+              </div>
+              <pre><code><span class="kwd">public class</span> <span class="cls">JavaLeague</span> {
+  <span class="kwd">public static void</span> <span class="mtd">main</span>(String[] args) {
+    Developer you = <span class="kwd">new</span> <span class="cls">Developer</span>();
+    <span class="kwd">while</span> (!you.<span class="mtd">isJuniorReady</span>()) {
+      you.<span class="mtd">codeDaily</span>(Hours.<span class="cst">TWO</span>);
+      you.<span class="mtd">buildWeeklyProject</span>();
+      you.<span class="mtd">explainToFriend</span>();
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Сетка статистики -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap gold">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </div>
+            <div class="stat-meta">
+              <span>Текущий этап</span>
+              <strong id="currentStage">Этап 0</strong>
+              <small id="currentStageName">Подготовка</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap emerald">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="stat-meta">
+              <span>Пройдено</span>
+              <strong id="completedWeeks">0 / 45</strong>
+              <small id="completionPercentage">0% выполнено</small>
+            </div>
+            <div class="stat-mini-bar">
+              <div class="stat-mini-fill" id="statsWeeksFill"></div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="stat-meta">
+              <span>Общее время</span>
+              <strong id="studyHours">0 ч</strong>
+              <small>инвестировано в код</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                </polygon>
+              </svg>
+            </div>
+            <div class="stat-meta">
+              <span>Очки Java League</span>
+              <strong id="totalPoints">0 XP</strong>
+              <small id="scoreDiffStatus">Вровень с другом</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Текущий спринт -->
+        <div class="section-head">
+          <div>
+            <h3>Активный спринт недели</h3>
+            <p>Не просто заучивай синтаксис — собери готовый мини-проект.</p>
+          </div>
+          <button class="text-btn" data-goto="roadmap">Весь роадмап →</button>
+        </div>
+
+        <div class="current-week-card" id="currentWeekCard">
+          <!-- Динамически заполняется через JS -->
+        </div>
+
+        <!-- Две колонки: ежедневный трекер + шкала понимания -->
+        <div class="two-col">
+          <!-- Панель: ежедневные 2 часа -->
+          <div class="panel">
+            <div class="section-head compact">
+              <div>
+                <h3>Сегодня: 2 часа практики</h3>
+                <p>Выполняй поэтапно каждый день</p>
+              </div>
+              <span class="timer-badge" id="timerDisplay">02:00:00</span>
+            </div>
+
+            <div class="daily-tasks-list">
+              <div class="daily-row" data-task-row="theory">
+                <div class="daily-time">30 мин</div>
+                <div class="daily-info">
+                  <b>Теория и документация</b>
+                  <span>Разобрать концепции и примеры</span>
+                </div>
+                <button class="check-btn" data-task="theory" aria-label="Отметить теорию">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="daily-row" data-task-row="practice">
+                <div class="daily-time">60 мин</div>
+                <div class="daily-info">
+                  <b>Практика в IDE</b>
+                  <span>Кодинг задач своими руками</span>
+                </div>
+                <button class="check-btn" data-task="practice" aria-label="Отметить практику">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="daily-row" data-task-row="review">
+                <div class="daily-time">30 мин</div>
+                <div class="daily-info">
+                  <b>Синхрон с другом</b>
+                  <span>Объяснить код и разобрать ошибки</span>
+                </div>
+                <button class="check-btn" data-task="review" aria-label="Отметить ревью">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Панель: система понимания 0-5 -->
+          <div class="panel">
+            <div class="section-head compact">
+              <div>
+                <h3>Шкала понимания 0–5</h3>
+                <p>Оцени готовность по текущей теме</p>
+              </div>
+              <div class="skill-result-pill"><span id="skillLevel">0</span> / 5</div>
+            </div>
+
+            <div class="skill-scale">
+              <button data-level="0" class="skill-btn">
+                <b>0</b>
+                <span>Темный лес</span>
+              </button>
+              <button data-level="1" class="skill-btn">
+                <b>1</b>
+                <span>Понял идею</span>
+              </button>
+              <button data-level="2" class="skill-btn">
+                <b>2</b>
+                <span>По туториалу</span>
+              </button>
+              <button data-level="3" class="skill-btn">
+                <b>3</b>
+                <span>Сам пишу</span>
+              </button>
+              <button data-level="4" class="skill-btn">
+                <b>4</b>
+                <span>Объясню другу</span>
+              </button>
+              <button data-level="5" class="skill-btn">
+                <b>5</b>
+                <span>Без подсказок</span>
+              </button>
+            </div>
+            <div class="skill-description" id="skillDescription">
+              Выберите текущий уровень понимания изучаемой темы.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- СЕКЦИЯ: ROADMAP -->
+      <section id="roadmap" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Дорожная карта: 11 этапов</h2>
+            <p>12+ месяцев системного развития при 2 часах каждый день.</p>
+          </div>
+        </div>
+        <div class="timeline" id="roadmapList"></div>
+      </section>
+
+      <!-- СЕКЦИЯ: УЧЕБНЫЕ НЕДЕЛИ -->
+      <section id="weeks" class="page">
+        <div class="section-head section-head-filters">
+          <div>
+            <h2>45 учебных недель</h2>
+            <p>Каждая неделя закрепляется кодом и мини-проектом в репозитории.</p>
+          </div>
+          <div class="filters-row">
+            <div class="search-wrap">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="weekSearch" placeholder="Поиск по теме или проекту..." autocomplete="off">
+            </div>
+            <select id="stageFilter" class="custom-select">
+              <option value="all">Все этапы (0–10)</option>
+            </select>
+          </div>
+        </div>
+        <div class="week-grid" id="weekGrid"></div>
+      </section>
+
+      <!-- СЕКЦИЯ: ПРОЕКТЫ -->
+      <section id="projects" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Портфолио проектов</h2>
+            <p>От консольного калькулятора до продакшн-ready Spring Boot сервиса.</p>
+          </div>
+        </div>
+        <div class="project-grid" id="projectGrid"></div>
+      </section>
+
+      <!-- СЕКЦИЯ: БАТТЛ И ОЧКИ (XP) -->
+      <section id="scores" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Java League XP Battle</h2>
+            <p>Дружеское соревнование, мотивирующее не забрасывать учёбу.</p>
+          </div>
+          <button class="primary-btn" id="openScoreModalBtn">+ Добавить XP</button>
+        </div>
+
+        <div class="score-layout">
+          <div class="leaderboard panel">
+            <div class="leaderboard-header">
+              <h3>Таблица лидеров</h3>
+              <span class="live-tag">LIVE XP</span>
+            </div>
+
+            <div class="player-card you">
+              <div class="player-avatar-wrap">
+                <div class="avatar you-avatar">Я</div>
+                <div class="avatar-badge">YOU</div>
+              </div>
+              <div class="player-details">
+                <div class="player-name-row">
+                  <b>Ты</b>
+                  <span class="player-status" id="youStatusLabel">Лидируешь</span>
+                </div>
+                <div class="player-xp-bar">
+                  <div class="xp-fill you-fill" id="youBarFill"></div>
+                </div>
+                <small>Личный прогресс по роадмапу</small>
+              </div>
+              <div class="player-score">
+                <strong id="youScore">0</strong>
+                <span>XP</span>
+              </div>
+            </div>
+
+            <div class="player-card friend">
+              <div class="player-avatar-wrap">
+                <div class="avatar friend-avatar">Д</div>
+                <div class="avatar-badge">FRIEND</div>
+              </div>
+              <div class="player-details">
+                <div class="player-name-row">
+                  <b>Друг</b>
+                  <span class="player-status" id="friendStatusLabel">Второй пилот</span>
+                </div>
+                <div class="player-xp-bar">
+                  <div class="xp-fill friend-fill" id="friendBarFill"></div>
+                </div>
+                <small>Очки за проекты и задачи</small>
+              </div>
+              <div class="player-score">
+                <strong id="friendScore">0</strong>
+                <span>XP</span>
+              </div>
+            </div>
+
+            <div class="quick-xp-actions">
+              <span class="quick-actions-title">Быстрое начисление:</span>
+              <div class="quick-btn-group">
+                <button class="ghost-btn quick-xp" data-player="you" data-add="10">+10 Дневной план</button>
+                <button class="ghost-btn quick-xp" data-player="you" data-add="30">+30 Мини-проект</button>
+                <button class="ghost-btn quick-xp" data-player="friend" data-add="10">+10 Другу (задача)</button>
+                <button class="ghost-btn quick-xp" data-player="friend" data-add="30">+30 Другу (проект)</button>
+              </div>
+            </div>
+
+            <div class="score-history-wrap">
+              <h4>История начислений</h4>
+              <div class="history-list" id="scoreHistoryList">
+                <!-- Заполняется динамически -->
+              </div>
+            </div>
+          </div>
+
+          <div class="panel points-panel">
+            <h3>Кодекс очков Java League</h3>
+            <p class="panel-subtitle">Очки начисляются за реальные действия, ведущие к прогрессу.</p>
+            <ul class="points-rule-list">
+              <li>
+                <div class="rule-title">Выполнил дневные 2 часа</div><span class="xp-badge plus">+10 XP</span>
+              </li>
+              <li>
+                <div class="rule-title">Дополнительная сложная задача</div><span class="xp-badge plus">+5 XP</span>
+              </li>
+              <li>
+                <div class="rule-title">Объяснил тему и код другу</div><span class="xp-badge plus">+10 XP</span>
+              </li>
+              <li>
+                <div class="rule-title">Завершил недельный мини-проект</div><span class="xp-badge plus">+30 XP</span>
+              </li>
+              <li>
+                <div class="rule-title">Сдал проект раньше воскресенья</div><span class="xp-badge plus">+10 XP</span>
+              </li>
+              <li>
+                <div class="rule-title">Нашел баг на код-ревью друга</div><span class="xp-badge plus">+5 XP</span>
+              </li>
+              <li class="penalty">
+                <div class="rule-title">Списал готовый проект</div><span class="xp-badge minus">−30 XP</span>
+              </li>
+              <li class="penalty">
+                <div class="rule-title">Нейросеть написала всё без понимания</div><span class="xp-badge minus">−50
+                  XP</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- СЕКЦИЯ: ПРАВИЛА И СИСТЕМА -->
+      <section id="rules" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Принципы эффективного обучения</h2>
+            <p>Как не превратить учёбу в бесконечный просмотр видеоуроков.</p>
+          </div>
+        </div>
+        <div class="rules-grid">
+          <article class="rule-card">
+            <div class="rule-num">01</div>
+            <h3>2 часа каждый день</h3>
+            <p>30 минут чистой теории, 60 минут практики в IDE своими руками, 30 минут совместного разбора с другом.</p>
+          </article>
+          <article class="rule-card">
+            <div class="rule-num">02</div>
+            <h3>Проект каждую неделю</h3>
+            <p>Знание синтаксиса без готового кода бесполезно. Каждая неделя должна оканчиваться коммитом работающей
+              программы.</p>
+          </article>
+          <article class="rule-card">
+            <div class="rule-num">03</div>
+            <h3>Метод Фейнмана</h3>
+            <p>Если ты не можешь объяснить написанный код своими словами за 2 минуты, значит концепция еще не усвоена.
+            </p>
+          </article>
+          <article class="rule-card">
+            <div class="rule-num">04</div>
+            <h3>AI — ментор, а не автор</h3>
+            <p>Используй ChatGPT или Claude для объяснения stack trace и архитектуры, но не копируй слепо решения.</p>
+          </article>
+          <article class="rule-card">
+            <div class="rule-num">05</div>
+            <h3>Шкала 0–5 вместо %</h3>
+            <p>Оценивай глубину: от 0 (темный лес) до 5 (могу решить задачу в продакшене без поиска и подсказок).</p>
+          </article>
+          <article class="rule-card">
+            <div class="rule-num">06</div>
+            <h3>Git — с первых дней</h3>
+            <p>Все домашние задания оформляются через Pull Request, ветки и осмысленные коммиты на GitHub.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Мобильная нижняя панель навигации (Bottom Navigation Bar) -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <button class="bottom-nav-item active" data-section="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+      <span>Главная</span>
+    </button>
+    <button class="bottom-nav-item" data-section="roadmap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+      </svg>
+      <span>Roadmap</span>
+    </button>
+    <button class="bottom-nav-item" data-section="weeks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      <span>Недели</span>
+    </button>
+    <button class="bottom-nav-item" data-section="projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+      <span>Проекты</span>
+    </button>
+    <button class="bottom-nav-item" data-section="scores">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+        <path d="M4 22h16"></path>
+        <path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path>
+        <path d="M14 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34"></path>
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+      </svg>
+      <span>XP Баттл</span>
+    </button>
+  </nav>
+
+  <!-- Модальное окно фокус-таймера -->
+  <div class="modal-overlay" id="timerModal">
+    <div class="modal-card timer-modal-card">
+      <button class="modal-close" id="closeTimerModalBtn">&times;</button>
+      <div class="timer-modal-header">
+        <span class="pill gold-pill">Deep Work Session</span>
+        <h2>2 Часа Фокуса</h2>
+        <p>Отложи телефон, закрой соцсети и погрузись в код.</p>
+      </div>
+
+      <div class="timer-big-display" id="modalTimerDisplay">02:00:00</div>
+
+      <div class="timer-modal-controls">
+        <button class="primary-btn timer-btn-large" id="modalStartBtn">▶ Старт</button>
+        <button class="ghost-btn timer-btn-large" id="modalResetBtn">↺ Сброс</button>
+      </div>
+      <div class="timer-tips">
+        💡 Совет: 30 мин теории · 60 мин практики в IDEA · 30 мин обсуждения
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно добавления XP -->
+  <div class="modal-overlay" id="scoreModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeScoreModalBtn">&times;</button>
+      <h3>Начислить или списать XP</h3>
+      <p class="modal-sub">Выберите участника, укажите количество XP и причину.</p>
+
+      <div class="form-group">
+        <label>Кому начислить:</label>
+        <div class="segmented-control">
+          <button type="button" class="segment-btn active" data-target-user="you">Ты</button>
+          <button type="button" class="segment-btn" data-target-user="friend">Друг</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Количество очков (XP):</label>
+        <div class="xp-preset-row">
+          <button type="button" class="preset-chip active" data-xp="10">+10</button>
+          <button type="button" class="preset-chip" data-xp="30">+30</button>
+          <button type="button" class="preset-chip" data-xp="5">+5</button>
+          <button type="button" class="preset-chip danger" data-xp="-30">−30</button>
+        </div>
+        <input type="number" id="customXpInput" value="10" placeholder="Или введите своё число">
+      </div>
+
+      <div class="form-group">
+        <label>Причина / Заметка:</label>
+        <input type="text" id="scoreReasonInput" placeholder="Например: Сдал проект Calculator 2.0">
+      </div>
+
+      <div class="modal-actions">
+        <button class="ghost-btn" id="cancelScoreModalBtn">Отмена</button>
+        <button class="primary-btn" id="confirmScoreModalBtn">Применить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Всплывающий тост уведомлений -->
+  <div class="toast" id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
