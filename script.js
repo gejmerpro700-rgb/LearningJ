@@ -8,6 +8,84 @@ const USER_STORAGE_KEY = 'javaLeagueUser';
 // Текущий выбранный пользователь ('nurik' или 'sanzhar')
 let currentUserId = localStorage.getItem(USER_STORAGE_KEY) || null;
 
+// Данные по умолчанию (гарантируют мгновенный рендер без ожидания API)
+const defaultWeeks = [
+  { n: 0, stage: 0, title: "Подготовка", topic: "JDK, IntelliJ IDEA, Git, GitHub", project: "Hello Java", tasks: ["Создать Java-проект", "Запустить main", "Первый commit/push"] },
+  { n: 1, stage: 1, title: "Синтаксис и переменные", topic: "class, main, println, int, double, String, boolean, Scanner", project: "Калькулятор", tasks: ["Переменные", "Ввод данных", "Арифметика"] },
+  { n: 2, stage: 1, title: "Условия", topic: "if, else, switch, &&, ||, !", project: "Угадай число", tasks: ["Сравнения", "Логика", "Ветвление"] },
+  { n: 3, stage: 1, title: "Циклы", topic: "for, while, do while, break, continue", project: "Терминальный тренажёр", tasks: ["Циклы", "Меню", "Повторение"] },
+  { n: 4, stage: 1, title: "Методы", topic: "void, return, parameters, arguments", project: "Calculator 2.0", tasks: ["Параметры", "Возврат", "Декомпозиция"] },
+  { n: 5, stage: 1, title: "Массивы и строки", topic: "arrays, indexes, length, String, char", project: "Анализатор текста", tasks: ["Массивы", "String", "Подсчёт"] },
+  { n: 6, stage: 2, title: "ArrayList", topic: "add, remove, get, set, contains, size", project: "To-Do List", tasks: ["Список задач", "CRUD", "Статусы"] },
+  { n: 7, stage: 2, title: "HashMap / HashSet", topic: "Map, Set, поиск и уникальность", project: "Телефонная книга", tasks: ["Map", "Set", "Поиск"] },
+  { n: 8, stage: 2, title: "ООП: основы", topic: "class, object, fields, methods, constructor, this", project: "Student Management System", tasks: ["Классы", "Объекты", "Конструкторы"] },
+  { n: 9, stage: 2, title: "ООП: наследование", topic: "private, getters/setters, extends", project: "Система персонажей", tasks: ["Инкапсуляция", "Наследование", "Переиспользование"] },
+  { n: 10, stage: 2, title: "ООП: полиморфизм", topic: "interfaces, abstract, overriding, overloading", project: "Mini Game Engine", tasks: ["Полиморфизм", "Интерфейсы", "Абстракция"] },
+  { n: 11, stage: 2, title: "Exceptions", topic: "try, catch, finally, throw, throws", project: "Устойчивые приложения", tasks: ["Обработка ошибок", "Свои исключения"] },
+  { n: 12, stage: 2, title: "Files", topic: "Path, Files, чтение и запись", project: "To-Do с сохранением", tasks: ["Файлы", "Сохранение", "Загрузка"] },
+  { n: 13, stage: 3, title: "Collections глубже", topic: "List, Set, Map, Queue, Deque", project: "Коллекционный менеджер", tasks: ["Структуры данных", "Выбор коллекции"] },
+  { n: 14, stage: 3, title: "Generics", topic: "List<String>, Map<String,Integer>, generic types", project: "Типизированный каталог", tasks: ["Generic-классы", "Generic-методы"] },
+  { n: 15, stage: 3, title: "Lambda", topic: "functional interfaces, Predicate, Function, Consumer", project: "Фильтр данных", tasks: ["Lambda", "Functional interfaces"] },
+  { n: 16, stage: 3, title: "Stream API", topic: "filter, map, sorted, collect, reduce", project: "Анализатор студентов", tasks: ["Фильтрация", "Сортировка", "Агрегация"] },
+  { n: 17, stage: 3, title: "Optional", topic: "null safety и Optional", project: "Безопасный поиск", tasks: ["Optional", "null"] },
+  { n: 18, stage: 3, title: "Date & Time", topic: "LocalDate, LocalDateTime, Duration, Period", project: "Система дедлайнов", tasks: ["Даты", "Время", "Расчёты"] },
+  { n: 19, stage: 3, title: "Multithreading", topic: "Thread, Runnable, ExecutorService, synchronization", project: "Многопоточный симулятор", tasks: ["Потоки", "Concurrency", "Race condition"] },
+  { n: 20, stage: 4, title: "Git и совместная разработка", topic: "clone, add, commit, push, pull, branch, merge", project: "Командный репозиторий", tasks: ["Ветки", "Merge", "Code review"] },
+  { n: 21, stage: 5, title: "SQL основы", topic: "таблицы, PK, FK, SELECT, INSERT, UPDATE, DELETE", project: "База студентов", tasks: ["SQL", "CRUD", "Связи"] },
+  { n: 22, stage: 5, title: "SQL глубже", topic: "JOIN, indexes, transactions", project: "Система оценок", tasks: ["JOIN", "Индексы", "Транзакции"] },
+  { n: 23, stage: 5, title: "JDBC", topic: "Java ↔ PostgreSQL, Connection, PreparedStatement, ResultSet", project: "Student Management DB", tasks: ["Подключение", "CRUD", "Запросы"] },
+  { n: 24, stage: 6, title: "Spring / IoC / DI", topic: "Dependency Injection, IoC, Beans", project: "Первое Spring-приложение", tasks: ["Beans", "DI", "Конфигурация"] },
+  { n: 25, stage: 6, title: "Spring Boot", topic: "project structure, configuration", project: "Backend starter", tasks: ["Spring Boot", "Properties"] },
+  { n: 26, stage: 6, title: "REST API", topic: "GET, POST, PUT, DELETE, HTTP, JSON", project: "Students REST API", tasks: ["Endpoints", "JSON", "CRUD"] },
+  { n: 27, stage: 6, title: "Spring Data JPA", topic: "Entity, Repository, Service, Controller", project: "School Backend", tasks: ["JPA", "Repositories", "Layers"] },
+  { n: 28, stage: 6, title: "Relationships", topic: "OneToMany, ManyToOne, ManyToMany", project: "School relations", tasks: ["Связи", "Модели"] },
+  { n: 29, stage: 7, title: "Security", topic: "authentication, authorization, roles", project: "Role-based API", tasks: ["Roles", "Permissions", "Security"] },
+  { n: 30, stage: 7, title: "JWT", topic: "tokens, login, protected endpoints", project: "JWT Auth", tasks: ["Login", "Token", "Protected API"] },
+  { n: 31, stage: 8, title: "Frontend basics", topic: "HTML, CSS, JavaScript, JSON, HTTP", project: "API dashboard", tasks: ["Fetch", "DOM", "Forms"] },
+  { n: 32, stage: 8, title: "Full-stack integration", topic: "Frontend → REST → Spring → PostgreSQL", project: "School platform v1", tasks: ["Integration", "Errors", "UX"] },
+  { n: 33, stage: 9, title: "Docker", topic: "containers, images, compose", project: "Containerized backend", tasks: ["Dockerfile", "Compose"] },
+  { n: 34, stage: 9, title: "Testing", topic: "JUnit, Mockito, integration tests", project: "Tested backend", tasks: ["Unit tests", "Mocks", "Coverage"] },
+  { n: 35, stage: 9, title: "Architecture", topic: "layers, DTO, validation, clean code", project: "Refactored API", tasks: ["DTO", "Validation", "Architecture"] },
+  { n: 36, stage: 9, title: "CI/CD", topic: "build, test, deploy pipeline", project: "CI pipeline", tasks: ["Automation", "Checks"] },
+  { n: 37, stage: 10, title: "Большой проект I", topic: "проектирование полноценного приложения", project: "School Management Platform", tasks: ["План", "Database", "Backend"] },
+  { n: 38, stage: 10, title: "Большой проект II", topic: "authentication, roles, features", project: "School Management Platform", tasks: ["Security", "Features"] },
+  { n: 39, stage: 10, title: "Большой проект III", topic: "frontend, integration, polish", project: "School Management Platform", tasks: ["Frontend", "Integration"] },
+  { n: 40, stage: 10, title: "Большой проект IV", topic: "tests, Docker, documentation", project: "Production-ready v1", tasks: ["Tests", "Docker", "README"] },
+  { n: 41, stage: 10, title: "Алгоритмы", topic: "arrays, strings, maps, sorting, complexity", project: "Algorithm challenge set", tasks: ["Задачи", "Big O"] },
+  { n: 42, stage: 10, title: "Подготовка к стажировке", topic: "GitHub, CV, interview questions", project: "Portfolio pack", tasks: ["README", "CV", "Projects"] },
+  { n: 43, stage: 10, title: "Mock interview", topic: "Java Core, OOP, SQL, Spring", project: "Техническое собеседование", tasks: ["Вопросы", "Live coding"] },
+  { n: 44, stage: 10, title: "Финальный релиз", topic: "публикация и презентация проекта", project: "Java League Final", tasks: ["Deploy", "Demo", "Retrospective"] }
+];
+
+const defaultStages = [
+  { n: 0, name: "Подготовка", desc: "Инструменты и первый запуск", range: "0" },
+  { n: 1, name: "Java Basics", desc: "Синтаксис, условия, циклы, методы", range: "1–5" },
+  { n: 2, name: "Java Core + OOP", desc: "Коллекции, ООП, exceptions, files", range: "6–12" },
+  { n: 3, name: "Java Core+", desc: "Generics, Lambda, Streams, concurrency", range: "13–19" },
+  { n: 4, name: "Git + командная разработка", desc: "Совместная работа и Git workflow", range: "20" },
+  { n: 5, name: "SQL + JDBC", desc: "PostgreSQL и соединение с Java", range: "21–23" },
+  { n: 6, name: "Spring Boot", desc: "REST, JPA и backend", range: "24–28" },
+  { n: 7, name: "Security", desc: "Auth, roles, JWT", range: "29–30" },
+  { n: 8, name: "Frontend basics", desc: "HTML, CSS, JS и интеграция", range: "31–32" },
+  { n: 9, name: "Production skills", desc: "Docker, tests, architecture, CI/CD", range: "33–36" },
+  { n: 10, name: "Большой проект + Junior prep", desc: "Full-stack, алгоритмы, портфолио", range: "37–44" }
+];
+
+const defaultProjects = [
+  { icon: "⌘", title: "Калькулятор", category: "Java Basics", desc: "Ввод, переменные и арифметика." },
+  { icon: "◉", title: "Угадай число", category: "Java Basics", desc: "Условия, логика и циклы." },
+  { icon: "☷", title: "To-Do List", category: "Java Core", desc: "ArrayList и CRUD-операции." },
+  { icon: "♙", title: "Student Management", category: "OOP", desc: "Классы, объекты и методы." },
+  { icon: "⚔", title: "Mini Game Engine", category: "OOP", desc: "Наследование и полиморфизм." },
+  { icon: "▣", title: "Анализатор студентов", category: "Core+", desc: "Streams, filtering, sorting." },
+  { icon: "◈", title: "Student Management DB", category: "SQL/JDBC", desc: "Java + PostgreSQL." },
+  { icon: "⌁", title: "Students REST API", category: "Spring Boot", desc: "REST CRUD backend." },
+  { icon: "♜", title: "School Backend", category: "Spring JPA", desc: "Entity, Repository, Service, Controller." },
+  { icon: "◆", title: "JWT Auth", category: "Security", desc: "Роли, login и защищённые endpoints." },
+  { icon: "▤", title: "School Platform", category: "Full-stack", desc: "Frontend → API → DB." },
+  { icon: "★", title: "Java League Final", category: "Portfolio", desc: "Большой проект + tests + Docker + README." }
+];
+
 let state = {
   currentUser: { id: 'nurik', name: 'Нурик', points: 0, hours: 0, level: 0 },
   otherUser: { id: 'sanzhar', name: 'Санжар', points: 0, hours: 0, level: 0 },
@@ -20,9 +98,9 @@ let state = {
   level: 0,
   hours: 0,
   scoreHistory: [],
-  weeks: [],
-  stages: [],
-  projects: []
+  weeks: defaultWeeks,
+  stages: defaultStages,
+  projects: defaultProjects
 };
 
 let isServerOnline = false;
@@ -97,6 +175,9 @@ function loadLocalState() {
     if (raw) {
       const parsed = JSON.parse(raw);
       state = { ...state, ...parsed };
+      if (!state.weeks || !state.weeks.length) state.weeks = defaultWeeks;
+      if (!state.stages || !state.stages.length) state.stages = defaultStages;
+      if (!state.projects || !state.projects.length) state.projects = defaultProjects;
     }
   } catch (e) {
     console.error('Ошибка чтения localStorage:', e);

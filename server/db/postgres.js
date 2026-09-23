@@ -1,5 +1,5 @@
 /**
- * Адаптер для подключения к PostgreSQL (локальный Postgres, Supabase, Neon.tech и т.д.)
+ * Адаптер для подключения к PostgreSQL (локальный Postgres, Supabase, Neon.tech, Render и т.д.)
  */
 
 import { config } from '../config.js';
@@ -14,18 +14,19 @@ export async function initPostgres() {
     const poolConfig = config.db.url
       ? { connectionString: config.db.url, ssl: config.db.url.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined }
       : {
-        host: config.db.host,
-        port: config.db.port,
-        user: config.db.user,
-        password: config.db.password,
-        database: config.db.database,
-      };
+          host: config.db.host,
+          port: config.db.port,
+          user: config.db.user,
+          password: config.db.password,
+          database: config.db.database,
+        };
 
     pgPool = new Pool(poolConfig);
 
     const client = await pgPool.connect();
     console.log('[PostgreSQL] Успешно подключено к базе данных!');
 
+    // Базовые таблицы
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(50) PRIMARY KEY,
@@ -33,21 +34,6 @@ export async function initPostgres() {
         points INT DEFAULT 0,
         hours NUMERIC(6,1) DEFAULT 0,
         level INT DEFAULT 0
-      );
-
-      CREATE TABLE IF NOT EXISTS completed_weeks (
-        user_id VARCHAR(50) NOT NULL,
-        week_number INT NOT NULL,
-        completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id, week_number)
-      );
-
-      CREATE TABLE IF NOT EXISTS daily_tasks (
-        user_id VARCHAR(50) NOT NULL,
-        task_key VARCHAR(50) NOT NULL,
-        task_date DATE NOT NULL,
-        completed INT DEFAULT 1,
-        PRIMARY KEY (user_id, task_key, task_date)
       );
 
       CREATE TABLE IF NOT EXISTS score_history (
@@ -59,6 +45,39 @@ export async function initPostgres() {
       );
     `);
 
+    // Автоматическая миграция: проверка наличия колонки user_id в completed_weeks и daily_tasks
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'completed_weeks' AND column_name = 'user_id'
+        ) THEN
+          DROP TABLE IF EXISTS completed_weeks CASCADE;
+          CREATE TABLE completed_weeks (
+            user_id VARCHAR(50) NOT NULL,
+            week_number INT NOT NULL,
+            completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, week_number)
+          );
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'daily_tasks' AND column_name = 'user_id'
+        ) THEN
+          DROP TABLE IF EXISTS daily_tasks CASCADE;
+          CREATE TABLE daily_tasks (
+            user_id VARCHAR(50) NOT NULL,
+            task_key VARCHAR(50) NOT NULL,
+            task_date DATE NOT NULL,
+            completed INT DEFAULT 1,
+            PRIMARY KEY (user_id, task_key, task_date)
+          );
+        END IF;
+      END $$;
+    `);
+
     // Пользователи Нурик и Санжар
     await client.query(`
       INSERT INTO users (id, name, points, hours, level) VALUES
@@ -66,6 +85,9 @@ export async function initPostgres() {
       ('sanzhar', 'Санжар', 0, 0, 0)
       ON CONFLICT (id) DO NOTHING;
     `);
+
+    // Очистка старых системных пользователей если были
+    await client.query(`DELETE FROM users WHERE id IN ('you', 'friend');`);
 
     client.release();
     return pgPool;
@@ -128,7 +150,10 @@ export const postgresRepository = {
         completed,
         otherCompletedCount,
         tasks,
-        scoreHistory: logsRes.rows
+        scoreHistory: logsRes.rows,
+        stages: initialStages,
+        weeks: initialWeeks,
+        projects: initialProjects
       };
     } finally {
       client.release();
