@@ -1,14 +1,21 @@
 // ==========================================================================
-// JAVA LEAGUE — CLIENT LOGIC & API SYNC
+// JAVA LEAGUE — MULTI-USER CLIENT LOGIC (НУРИК & САНЖАР)
 // ==========================================================================
 
-// Константы и локальное состояние по умолчанию
-const LOCAL_STORAGE_KEY = 'javaLeagueState';
+const LOCAL_STORAGE_KEY = 'javaLeagueState_v2';
+const USER_STORAGE_KEY = 'javaLeagueUser';
+
+// Текущий выбранный пользователь ('nurik' или 'sanzhar')
+let currentUserId = localStorage.getItem(USER_STORAGE_KEY) || null;
 
 let state = {
+  currentUser: { id: 'nurik', name: 'Нурик', points: 0, hours: 0, level: 0 },
+  otherUser: { id: 'sanzhar', name: 'Санжар', points: 0, hours: 0, level: 0 },
+  allUsers: [],
   points: 0,
   friend: 0,
   completed: [],
+  otherCompletedCount: 0,
   tasks: {},
   level: 0,
   hours: 0,
@@ -21,9 +28,9 @@ let state = {
 let isServerOnline = false;
 let soundEnabled = true;
 
-// Web Audio API синтезатор звуковых эффектов (без необходимости внешних файлов)
-const audioCtx = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)
-  ? new (window.AudioContext || window.webkitAudioContext)()
+// Web Audio API синтезатор звуковых эффектов
+const audioCtx = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext) 
+  ? new (window.AudioContext || window.webkitAudioContext)() 
   : null;
 
 function playSound(type) {
@@ -40,17 +47,15 @@ function playSound(type) {
     const now = audioCtx.currentTime;
 
     if (type === 'success') {
-      // Приятный мажорный перезвон (завершение задачи/недели)
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
-      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2);
       gain.gain.setValueAtTime(0.15, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
       osc.start(now);
       osc.stop(now + 0.35);
     } else if (type === 'alarm') {
-      // Сигнал окончания таймера 2 часов
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(880, now);
       osc.frequency.setValueAtTime(1174.66, now + 0.2);
@@ -85,7 +90,7 @@ function toast(msg) {
   t._timer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// Загрузка состояния из localStorage
+// Загрузка локального состояния
 function loadLocalState() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -98,13 +103,26 @@ function loadLocalState() {
   }
 }
 
-// Сохранение в localStorage
+// Сохранение локального состояния
 function saveLocalState() {
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
     console.error('Ошибка записи localStorage:', e);
   }
+}
+
+// Нормализация имени: "нурик", "nurik" -> "nurik"; "санжар", "sanzhar" -> "sanzhar"
+function normalizeName(input) {
+  if (!input) return null;
+  const clean = String(input).trim().toLowerCase();
+  if (clean.includes('санжар') || clean.includes('sanzhar') || clean.includes('саня') || clean === 's') {
+    return 'sanzhar';
+  }
+  if (clean.includes('нурик') || clean.includes('nurik') || clean.includes('нур') || clean === 'n') {
+    return 'nurik';
+  }
+  return null;
 }
 
 // Клиентский API слой
@@ -125,47 +143,84 @@ const api = {
     return isServerOnline;
   },
 
-  async fetchState() {
+  async fetchUsers() {
     if (!isServerOnline) return;
     try {
-      const today = new Date().toISOString().slice(0, 10);
-      const res = await fetch(`/api/state?date=${today}`);
+      const res = await fetch('/api/users');
       if (res.ok) {
         const json = await res.json();
-        if (json.success && json.data) {
-          state.points = json.data.points ?? state.points;
-          state.friend = json.data.friend ?? state.friend;
-          state.hours = json.data.hours ?? state.hours;
-          state.level = json.data.level ?? state.level;
-          state.completed = json.data.completed || state.completed;
-          state.tasks = json.data.tasks || state.tasks;
-          state.scoreHistory = json.data.scoreHistory || [];
-          if (json.data.weeks?.length) state.weeks = json.data.weeks;
-          if (json.data.stages?.length) state.stages = json.data.stages;
-          if (json.data.projects?.length) state.projects = json.data.projects;
-          saveLocalState();
+        if (json.success && json.users) {
+          state.allUsers = json.users;
+          updateLoginModalUsers(json.users);
         }
       }
     } catch (e) {
-      console.warn('API error, working offline:', e);
+      console.warn('Failed to fetch users:', e);
     }
   },
 
+  async fetchState() {
+    const uid = currentUserId || 'nurik';
+    const today = new Date().toISOString().slice(0, 10);
+
+    if (isServerOnline) {
+      try {
+        const res = await fetch(`/api/state?userId=${encodeURIComponent(uid)}&date=${today}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const d = json.data;
+            state.currentUser = d.currentUser || state.currentUser;
+            state.otherUser = d.otherUser || state.otherUser;
+            state.allUsers = d.allUsers || state.allUsers;
+            state.points = d.points ?? state.points;
+            state.friend = d.friend ?? state.friend;
+            state.hours = d.hours ?? state.hours;
+            state.level = d.level ?? state.level;
+            state.completed = d.completed || state.completed;
+            state.otherCompletedCount = d.otherCompletedCount || 0;
+            state.tasks = d.tasks || state.tasks;
+            state.scoreHistory = d.scoreHistory || [];
+            if (d.weeks?.length) state.weeks = d.weeks;
+            if (d.stages?.length) state.stages = d.stages;
+            if (d.projects?.length) state.projects = d.projects;
+            saveLocalState();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('API fetchState error, working offline:', e);
+      }
+    }
+
+    // Офлайн режим: локальные пользователи
+    if (!state.allUsers || state.allUsers.length === 0) {
+      state.allUsers = [
+        { id: 'nurik', name: 'Нурик', points: state.points || 0, hours: state.hours || 0, level: state.level || 0 },
+        { id: 'sanzhar', name: 'Санжар', points: state.friend || 0, hours: 0, level: 0 }
+      ];
+    }
+    const curr = state.allUsers.find(u => u.id === uid) || state.allUsers[0];
+    const other = state.allUsers.find(u => u.id !== uid) || state.allUsers[1];
+    state.currentUser = curr;
+    state.otherUser = other;
+    state.points = curr.points;
+    state.friend = other.points;
+  },
+
   async toggleWeek(weekNum) {
+    const uid = currentUserId || 'nurik';
     if (isServerOnline) {
       try {
         const res = await fetch('/api/weeks/toggle', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ weekNumber: weekNum })
+          body: JSON.stringify({ userId: uid, weekNumber: weekNum })
         });
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.state) {
-            state.points = json.state.points;
-            state.completed = json.state.completed;
-            state.scoreHistory = json.state.scoreHistory || [];
-            saveLocalState();
+            this.applyStateUpdate(json.state);
             return json.isCompleted;
           }
         }
@@ -173,6 +228,7 @@ const api = {
         console.warn('Sync failed, toggling locally:', e);
       }
     }
+
     // Локальный режим
     const idx = state.completed.indexOf(weekNum);
     let done = false;
@@ -185,27 +241,26 @@ const api = {
       state.points += 30;
       done = true;
     }
+    if (state.currentUser) state.currentUser.points = state.points;
     saveLocalState();
     return done;
   },
 
   async toggleDailyTask(taskKey) {
+    const uid = currentUserId || 'nurik';
     const today = new Date().toISOString().slice(0, 10);
+
     if (isServerOnline) {
       try {
         const res = await fetch('/api/tasks/toggle', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskKey, date: today })
+          body: JSON.stringify({ userId: uid, taskKey, date: today })
         });
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.state) {
-            state.points = json.state.points;
-            state.hours = json.state.hours;
-            state.tasks = json.state.tasks;
-            state.scoreHistory = json.state.scoreHistory || [];
-            saveLocalState();
+            this.applyStateUpdate(json.state);
             return json.done;
           }
         }
@@ -213,6 +268,7 @@ const api = {
         console.warn('Sync failed, toggling task locally:', e);
       }
     }
+
     // Локальный режим
     state.tasks[taskKey] = !state.tasks[taskKey];
     const isDone = !!state.tasks[taskKey];
@@ -224,25 +280,27 @@ const api = {
       state.points = Math.max(0, state.points - 10);
       state.hours = Math.max(0, state.hours - hourDelta);
     }
+    if (state.currentUser) {
+      state.currentUser.points = state.points;
+      state.currentUser.hours = state.hours;
+    }
     saveLocalState();
     return isDone;
   },
 
-  async addScore(userId, points, reason) {
+  async addScore(targetUserId, points, reason) {
+    const uid = targetUserId || currentUserId || 'nurik';
     if (isServerOnline) {
       try {
         const res = await fetch('/api/scores', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: userId, points, reason })
+          body: JSON.stringify({ userId: uid, points, reason })
         });
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data) {
-            state.points = json.data.points;
-            state.friend = json.data.friend;
-            state.scoreHistory = json.data.scoreHistory || [];
-            saveLocalState();
+            this.applyStateUpdate(json.data);
             return;
           }
         }
@@ -250,26 +308,34 @@ const api = {
         console.warn('Sync failed, adding score locally:', e);
       }
     }
+
     // Локальный режим
     const delta = Number(points) || 0;
-    if (userId === 'friend') {
-      state.friend = Math.max(0, state.friend + delta);
-    } else {
+    if (uid === currentUserId) {
       state.points = Math.max(0, state.points + delta);
+      if (state.currentUser) state.currentUser.points = state.points;
+    } else {
+      state.friend = Math.max(0, state.friend + delta);
+      if (state.otherUser) state.otherUser.points = state.friend;
     }
+
+    const userName = uid === 'sanzhar' ? 'Санжар' : 'Нурик';
     state.scoreHistory.unshift({
       id: Date.now(),
-      user_id: userId,
+      user_id: uid,
+      user_name: userName,
       points: delta,
-      reason: reason || (delta >= 0 ? `+${delta} XP` : `${delta} XP`),
+      reason: reason || `${userName}: ${delta >= 0 ? '+' : ''}${delta} XP`,
       created_at: new Date().toISOString()
     });
     saveLocalState();
   },
 
   async updateLevel(level) {
+    const uid = currentUserId || 'nurik';
     const lvl = Math.max(0, Math.min(5, Number(level)));
     state.level = lvl;
+    if (state.currentUser) state.currentUser.level = lvl;
     saveLocalState();
 
     if (isServerOnline) {
@@ -277,7 +343,7 @@ const api = {
         await fetch('/api/level', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ level: lvl })
+          body: JSON.stringify({ userId: uid, level: lvl })
         });
       } catch (e) {
         console.warn('Failed to sync level:', e);
@@ -286,14 +352,17 @@ const api = {
   },
 
   async addStudyHours(hours) {
+    const uid = currentUserId || 'nurik';
     state.hours += hours;
+    if (state.currentUser) state.currentUser.hours = state.hours;
     saveLocalState();
+
     if (isServerOnline) {
       try {
         await fetch('/api/hours', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hours })
+          body: JSON.stringify({ userId: uid, hours })
         });
       } catch (e) {
         console.warn('Failed to sync hours:', e);
@@ -302,21 +371,44 @@ const api = {
   },
 
   async resetAll() {
+    const uid = currentUserId || 'nurik';
     if (isServerOnline) {
       try {
-        await fetch('/api/reset', { method: 'POST' });
+        await fetch('/api/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uid })
+        });
       } catch (e) {
         console.warn('Reset error:', e);
       }
     }
     state.points = 0;
-    state.friend = 0;
     state.completed = [];
     state.tasks = {};
     state.level = 0;
     state.hours = 0;
-    state.scoreHistory = [];
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    if (state.currentUser) {
+      state.currentUser.points = 0;
+      state.currentUser.hours = 0;
+      state.currentUser.level = 0;
+    }
+    saveLocalState();
+  },
+
+  applyStateUpdate(newState) {
+    if (!newState) return;
+    state.currentUser = newState.currentUser || state.currentUser;
+    state.otherUser = newState.otherUser || state.otherUser;
+    state.allUsers = newState.allUsers || state.allUsers;
+    state.points = newState.points ?? state.points;
+    state.friend = newState.friend ?? state.friend;
+    state.hours = newState.hours ?? state.hours;
+    state.level = newState.level ?? state.level;
+    state.completed = newState.completed || state.completed;
+    state.otherCompletedCount = newState.otherCompletedCount || 0;
+    state.tasks = newState.tasks || state.tasks;
+    state.scoreHistory = newState.scoreHistory || state.scoreHistory;
     saveLocalState();
   }
 };
@@ -336,6 +428,95 @@ function updateServerStatusUI() {
   }
 }
 
+// Обновление плашки пользователя в UI
+function updateCurrentUserUI() {
+  const isNurik = currentUserId === 'nurik';
+  const name = isNurik ? 'Нурик' : 'Санжар';
+  const letter = isNurik ? 'Н' : 'С';
+  const avatarClass = isNurik ? 'nurik' : 'sanzhar';
+
+  // Верхний бар
+  const topName = $('#topUserName');
+  const topXp = $('#topUserXp');
+  const topAvatar = $('#topUserAvatar');
+  if (topName) topName.textContent = name;
+  if (topXp) topXp.textContent = `${state.points} XP`;
+  if (topAvatar) {
+    topAvatar.textContent = letter;
+    topAvatar.className = `user-chip-avatar ${avatarClass}`;
+  }
+
+  // Сайдбар
+  const sideName = $('#sidebarUserName');
+  const sideXp = $('#sidebarUserXp');
+  const sideAvatar = $('#sidebarUserAvatar');
+  if (sideName) sideName.textContent = name;
+  if (sideXp) sideXp.textContent = `${state.points} XP`;
+  if (sideAvatar) {
+    sideAvatar.textContent = letter;
+    sideAvatar.className = `sidebar-user-avatar ${avatarClass}`;
+  }
+
+  // Hero pill
+  const heroPill = $('#heroUserPill');
+  if (heroPill) {
+    heroPill.innerHTML = `👤 Профиль: <b>${name}</b>`;
+  }
+
+  // Пресет в модалке очков
+  $$('#scoreModal .segment-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.targetUser === currentUserId);
+  });
+}
+
+// Обновление карточек в окне логина с актуальным XP
+function updateLoginModalUsers(users) {
+  if (!users || !users.length) return;
+  const nurik = users.find(u => u.id === 'nurik');
+  const sanzhar = users.find(u => u.id === 'sanzhar');
+  const nXp = $('#loginNurikXp');
+  const sXp = $('#loginSanzharXp');
+  if (nXp && nurik) nXp.textContent = nurik.points || 0;
+  if (sXp && sanzhar) sXp.textContent = sanzhar.points || 0;
+}
+
+// Переключение пользователя
+async function setCurrentUser(userId) {
+  if (userId !== 'nurik' && userId !== 'sanzhar') return;
+  currentUserId = userId;
+  localStorage.setItem(USER_STORAGE_KEY, userId);
+
+  // Скрываем модальное окно логина
+  const loginModal = $('#loginModal');
+  if (loginModal) loginModal.classList.remove('open');
+
+  toast(`Вход выполнен: ${userId === 'nurik' ? 'Нурик 👑' : 'Санжар ⚡'}`);
+  playSound('success');
+
+  // Загружаем данные этого пользователя
+  await api.fetchState();
+  updateCurrentUserUI();
+  renderAll();
+}
+
+// Открытие окна логина / выбора профиля
+function openLoginModal(canClose = true) {
+  const modal = $('#loginModal');
+  const closeBtn = $('#closeLoginModalBtn');
+  const errorEl = $('#loginError');
+  const input = $('#loginNameInput');
+
+  if (errorEl) errorEl.textContent = '';
+  if (input) input.value = '';
+
+  if (closeBtn) {
+    closeBtn.style.display = canClose && currentUserId ? 'grid' : 'none';
+  }
+
+  api.fetchUsers();
+  if (modal) modal.classList.add('open');
+}
+
 // Навигация по секциям
 function goToSection(sectionId) {
   playSound('click');
@@ -348,7 +529,7 @@ function goToSection(sectionId) {
     roadmap: 'Дорожная карта',
     weeks: 'Учебные недели',
     projects: 'Проекты',
-    scores: 'XP Баттл',
+    scores: 'XP Баттл (Нурик vs Санжар)',
     rules: 'Система обучения'
   };
 
@@ -386,24 +567,24 @@ function renderRoadmap() {
           <span class="stage-num-badge">ЭТАП ${stage.n}</span>
           <div class="stage-head-text">
             <h3>${stage.name}</h3>
-            <p>${stage.desc} · недели ${stage.range} · (${completedInStage}/${stageWeeks.length} сдано)</p>
+            <p>${stage.desc} · недели ${stage.range} · (сдано вами: ${completedInStage}/${stageWeeks.length})</p>
           </div>
           <span class="stage-toggle-icon">+</span>
         </div>
         <div class="stage-weeks">
           ${stageWeeks.map(w => {
-      const isDone = state.completed.includes(w.n);
-      return `
+            const isDone = state.completed.includes(w.n);
+            return `
               <div class="mini-week ${isDone ? 'done' : ''}">
                 <div class="mini-week-top">
                   <b>Неделя ${w.n}</b>
-                  <span>${isDone ? '✓ Сдано' : 'В процессе'}</span>
+                  <span>${isDone ? '✓ Сдано вами' : 'В процессе'}</span>
                 </div>
                 <strong>${w.title}</strong>
                 <span class="mini-week-project">📦 ${w.project}</span>
               </div>
             `;
-    }).join('')}
+          }).join('')}
         </div>
       </article>
     `;
@@ -423,7 +604,7 @@ function renderWeeks() {
   if (!stageFilter || !state.stages.length) return;
 
   const currentVal = stageFilter.value || 'all';
-  stageFilter.innerHTML = '<option value="all">Все этапы (0–10)</option>' +
+  stageFilter.innerHTML = '<option value="all">Все этапы (0–10)</option>' + 
     state.stages.map(s => `<option value="${s.n}">Этап ${s.n} — ${s.name}</option>`).join('');
   stageFilter.value = currentVal;
 
@@ -433,9 +614,9 @@ function renderWeeks() {
 
     const filtered = state.weeks.filter(w => {
       const matchStage = filter === 'all' || String(w.stage) === filter;
-      const matchSearch = !search ||
-        w.title.toLowerCase().includes(search) ||
-        w.topic.toLowerCase().includes(search) ||
+      const matchSearch = !search || 
+        w.title.toLowerCase().includes(search) || 
+        w.topic.toLowerCase().includes(search) || 
         w.project.toLowerCase().includes(search);
       return matchStage && matchSearch;
     });
@@ -460,7 +641,7 @@ function renderWeeks() {
           <p>${w.topic}</p>
           <span class="week-card-project-tag">📦 Проект: <b>${w.project}</b></span>
           <button class="${isDone ? 'ghost-btn' : 'primary-btn'}" data-toggle-week="${w.n}">
-            ${isDone ? '✓ Проект сдан' : 'Отметить сдачу (+30 XP)'}
+            ${isDone ? '✓ Проект сдан вами' : 'Сдать проект (+30 XP)'}
           </button>
         </article>
       `;
@@ -537,7 +718,7 @@ function renderDashboard() {
           Мини-проект недели: <b>${w.project}</b>
         </div>
         <button class="${isCurrentDone ? 'ghost-btn' : 'primary-btn'}" data-toggle-week="${w.n}">
-          ${isCurrentDone ? '✓ Проект выполнен' : 'Завершить проект (+30 XP)'}
+          ${isCurrentDone ? '✓ Проект сдан вами' : 'Сдать проект (+30 XP)'}
         </button>
       </div>
     `;
@@ -571,32 +752,9 @@ function renderDashboard() {
 
   $('#studyHours').textContent = `${state.hours} ч`;
   $('#totalPoints').textContent = `${state.points} XP`;
-  $('#youScore').textContent = state.points;
-  $('#friendScore').textContent = state.friend;
 
-  // Бары соревнований
-  const maxPts = Math.max(state.points, state.friend, 10);
-  $('#youBarFill').style.width = `${Math.min(100, Math.round((state.points / maxPts) * 100))}%`;
-  $('#friendBarFill').style.width = `${Math.min(100, Math.round((state.friend / maxPts) * 100))}%`;
-
-  const diff = state.points - state.friend;
-  const scoreDiffStatus = $('#scoreDiffStatus');
-  const youStatus = $('#youStatusLabel');
-  const friendStatus = $('#friendStatusLabel');
-
-  if (diff > 0) {
-    scoreDiffStatus.textContent = `Впереди на +${diff} XP`;
-    youStatus.textContent = 'Лидируешь 👑';
-    friendStatus.textContent = 'Догоняет 🎯';
-  } else if (diff < 0) {
-    scoreDiffStatus.textContent = `Отставание: ${diff} XP`;
-    youStatus.textContent = 'Догоняющий 🎯';
-    friendStatus.textContent = 'Лидирует 👑';
-  } else {
-    scoreDiffStatus.textContent = 'Вровень с другом';
-    youStatus.textContent = 'Ничья';
-    friendStatus.textContent = 'Ничья';
-  }
+  // Шкала лидерства
+  renderLeaderboard();
 
   // Уровень понимания
   $('#skillLevel').textContent = state.level;
@@ -617,6 +775,59 @@ function renderDashboard() {
 
   // История начислений
   renderScoreHistory();
+  updateCurrentUserUI();
+}
+
+// Рендеринг Лидерборда Нурика и Санжара
+function renderLeaderboard() {
+  const isNurik = currentUserId === 'nurik';
+  const nurikPts = isNurik ? state.points : state.friend;
+  const sanzharPts = isNurik ? state.friend : state.points;
+
+  // Счетчики
+  const nScoreEl = $('#nurikScore');
+  const sScoreEl = $('#sanzharScore');
+  if (nScoreEl) nScoreEl.textContent = nurikPts;
+  if (sScoreEl) sScoreEl.textContent = sanzharPts;
+
+  // Бейджи "ВЫ"
+  const nBadge = $('#nurikBadge');
+  const sBadge = $('#sanzharBadge');
+  if (nBadge) nBadge.textContent = isNurik ? 'ВЫ 👤' : 'NURIK';
+  if (sBadge) sBadge.textContent = !isNurik ? 'ВЫ 👤' : 'SANZHAR';
+
+  const cardNurik = $('#cardNurik');
+  const cardSanzhar = $('#cardSanzhar');
+  if (cardNurik) cardNurik.classList.toggle('active-user', isNurik);
+  if (cardSanzhar) cardSanzhar.classList.toggle('active-user', !isNurik);
+
+  // Бары прогресса
+  const maxPts = Math.max(nurikPts, sanzharPts, 10);
+  const nFill = $('#nurikBarFill');
+  const sFill = $('#sanzharBarFill');
+  if (nFill) nFill.style.width = `${Math.min(100, Math.round((nurikPts / maxPts) * 100))}%`;
+  if (sFill) sFill.style.width = `${Math.min(100, Math.round((sanzharPts / maxPts) * 100))}%`;
+
+  // Тексты статусов
+  const diff = nurikPts - sanzharPts;
+  const scoreDiffStatus = $('#scoreDiffStatus');
+  const nStatus = $('#nurikStatusLabel');
+  const sStatus = $('#sanzharStatusLabel');
+
+  if (diff > 0) {
+    if (nStatus) nStatus.textContent = `Лидирует (+${diff} XP) 👑`;
+    if (sStatus) sStatus.textContent = `Догоняет (-${diff} XP) 🎯`;
+    if (scoreDiffStatus) scoreDiffStatus.textContent = isNurik ? `Впереди на +${diff} XP 👑` : `Отставание: ${diff} XP 🎯`;
+  } else if (diff < 0) {
+    const absDiff = Math.abs(diff);
+    if (nStatus) nStatus.textContent = `Догоняет (-${absDiff} XP) 🎯`;
+    if (sStatus) sStatus.textContent = `Лидирует (+${absDiff} XP) 👑`;
+    if (scoreDiffStatus) scoreDiffStatus.textContent = !isNurik ? `Впереди на +${absDiff} XP 👑` : `Отставание: ${absDiff} XP 🎯`;
+  } else {
+    if (nStatus) nStatus.textContent = 'Ничья ⚡';
+    if (sStatus) sStatus.textContent = 'Ничья ⚡';
+    if (scoreDiffStatus) scoreDiffStatus.textContent = 'Вровень с соперником';
+  }
 }
 
 // Рендеринг истории очков
@@ -625,16 +836,20 @@ function renderScoreHistory() {
   if (!container) return;
 
   if (!state.scoreHistory || state.scoreHistory.length === 0) {
-    container.innerHTML = '<div style="padding: 12px; color: var(--text-muted); font-size: 11px;">История пока пуста.</div>';
+    container.innerHTML = '<div style="padding: 12px; color: var(--text-muted); font-size: 11px;">История пока пуста. Начните выполнять задачи!</div>';
     return;
   }
 
-  container.innerHTML = state.scoreHistory.slice(0, 8).map(item => {
+  container.innerHTML = state.scoreHistory.slice(0, 10).map(item => {
     const isPlus = item.points >= 0;
-    const userLabel = item.user_id === 'friend' ? 'Друг' : 'Ты';
+    const userName = item.user_name || (item.user_id === 'sanzhar' ? 'Санжар' : 'Нурик');
+    const isYou = item.user_id === currentUserId;
+
     return `
       <div class="history-item">
-        <span class="reason"><b>${userLabel}</b>: ${item.reason}</span>
+        <span class="reason">
+          <b style="color: ${item.user_id === 'sanzhar' ? '#38bdf8' : '#fbbf24'};">${userName}${isYou ? ' (Вы)' : ''}</b>: ${item.reason}
+        </span>
         <span class="pts ${isPlus ? 'positive' : 'negative'}">${isPlus ? '+' : ''}${item.points} XP</span>
       </div>
     `;
@@ -654,7 +869,7 @@ function renderAll() {
 // ==========================================================================
 
 let timerInterval = null;
-let remainingSeconds = 7200; // 2 часа
+let remainingSeconds = 7200;
 const TOTAL_SECONDS = 7200;
 
 function formatTime(sec) {
@@ -687,7 +902,7 @@ function toggleTimer() {
 
   $('#focusBtnText').textContent = 'Пауза';
   $('#modalStartBtn').textContent = '⏸ Пауза';
-  toast('Сессия 2 часов запущена!');
+  toast(`Фокус-сессия 2 часов запущена для ${currentUserId === 'nurik' ? 'Нурика' : 'Санжара'}!`);
   playSound('click');
 
   timerInterval = setInterval(() => {
@@ -702,8 +917,8 @@ function toggleTimer() {
 
       playSound('alarm');
       api.addStudyHours(2);
-      api.addScore('you', 20, 'Завершена 2-часовая сессия');
-      toast('🎉 2 часа завершены! +20 XP и +2 часа в профиль!');
+      api.addScore(currentUserId, 20, '2 часа фокуса завершены');
+      toast('🎉 2 часа завершены! +20 XP и +2 часа в ваш профиль!');
       renderDashboard();
       return;
     }
@@ -730,12 +945,42 @@ function resetTimer() {
 // ==========================================================================
 
 function initEvents() {
-  // Навигация (десктопный сайдбар и мобильный нижний бар)
+  // Навигация
   $$('.nav-item').forEach(b => b.addEventListener('click', () => goToSection(b.dataset.section)));
   $$('.bottom-nav-item').forEach(b => b.addEventListener('click', () => goToSection(b.dataset.section)));
   $$('[data-goto]').forEach(b => b.addEventListener('click', () => goToSection(b.dataset.goto)));
 
-  // Клик по ежедневным чекбоксам
+  // Смена пользователя (кнопка в шапке и сайдбаре)
+  $('#openUserModalBtn')?.addEventListener('click', () => openLoginModal(true));
+  $('#switchUserSidebarBtn')?.addEventListener('click', () => openLoginModal(true));
+  $('#closeLoginModalBtn')?.addEventListener('click', () => {
+    $('#loginModal')?.classList.remove('open');
+  });
+
+  // Клик по карточкам входа
+  $$('[data-select-user]').forEach(card => {
+    card.addEventListener('click', () => {
+      const u = card.dataset.selectUser;
+      setCurrentUser(u);
+    });
+  });
+
+  // Форма ввода имени
+  $('#loginForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const input = $('#loginNameInput');
+    const val = input ? input.value : '';
+    const resolved = normalizeName(val);
+    const errorEl = $('#loginError');
+
+    if (!resolved) {
+      if (errorEl) errorEl.textContent = 'Пожалуйста, введите "Нурик" или "Санжар"';
+      return;
+    }
+    setCurrentUser(resolved);
+  });
+
+  // Ежедневные чеки
   $$('.check-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const key = btn.dataset.task;
@@ -757,7 +1002,7 @@ function initEvents() {
       await api.updateLevel(lvl);
       playSound('click');
       renderDashboard();
-      toast(`Уровень понимания обновлен: ${lvl}/5`);
+      toast(`Уровень понимания: ${lvl}/5`);
     });
   });
 
@@ -774,43 +1019,48 @@ function initEvents() {
     if (e.target === timerModal) timerModal.classList.remove('open');
   });
 
-  // Быстрые кнопки добавления XP в лидерборде
+  // Быстрые кнопки начисления XP (начисляют текущему пользователю!)
   $$('.quick-xp').forEach(b => {
     b.addEventListener('click', async () => {
-      const player = b.dataset.player;
       const add = Number(b.dataset.add);
       const text = b.textContent.trim();
-      await api.addScore(player, add, text);
+      await api.addScore(currentUserId, add, text);
       playSound(add > 0 ? 'success' : 'click');
-      toast(`${player === 'friend' ? 'Другу: ' : ''}${add > 0 ? '+' : ''}${add} XP`);
+      toast(`Вам начислено ${add > 0 ? '+' : ''}${add} XP`);
       renderDashboard();
     });
   });
 
   // Модалка добавления XP
   const scoreModal = $('#scoreModal');
-  let selectedTargetUser = 'you';
+  let selectedTargetUser = currentUserId || 'nurik';
   let selectedXpDelta = 10;
 
-  $('#openScoreModalBtn')?.addEventListener('click', () => scoreModal?.classList.add('open'));
+  $('#openScoreModalBtn')?.addEventListener('click', () => {
+    selectedTargetUser = currentUserId || 'nurik';
+    $$('#scoreModal .segment-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.targetUser === selectedTargetUser);
+    });
+    scoreModal?.classList.add('open');
+  });
+
   $('#closeScoreModalBtn')?.addEventListener('click', () => scoreModal?.classList.remove('open'));
   $('#cancelScoreModalBtn')?.addEventListener('click', () => scoreModal?.classList.remove('open'));
-
   scoreModal?.addEventListener('click', e => {
     if (e.target === scoreModal) scoreModal.classList.remove('open');
   });
 
-  $$('.segment-btn').forEach(btn => {
+  $$('#scoreModal .segment-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      $$('.segment-btn').forEach(b => b.classList.remove('active'));
+      $$('#scoreModal .segment-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedTargetUser = btn.dataset.targetUser;
     });
   });
 
-  $$('.preset-chip').forEach(chip => {
+  $$('#scoreModal .preset-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      $$('.preset-chip').forEach(c => c.classList.remove('active'));
+      $$('#scoreModal .preset-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       selectedXpDelta = Number(chip.dataset.xp);
       const customInput = $('#customXpInput');
@@ -820,7 +1070,7 @@ function initEvents() {
 
   $('#customXpInput')?.addEventListener('input', e => {
     selectedXpDelta = Number(e.target.value) || 0;
-    $$('.preset-chip').forEach(c => c.classList.remove('active'));
+    $$('#scoreModal .preset-chip').forEach(c => c.classList.remove('active'));
   });
 
   $('#confirmScoreModalBtn')?.addEventListener('click', async () => {
@@ -828,7 +1078,8 @@ function initEvents() {
     const reason = reasonInput?.value.trim() || undefined;
     await api.addScore(selectedTargetUser, selectedXpDelta, reason);
     playSound(selectedXpDelta > 0 ? 'success' : 'click');
-    toast(`${selectedTargetUser === 'friend' ? 'Другу ' : ''}${selectedXpDelta >= 0 ? '+' : ''}${selectedXpDelta} XP`);
+    const targetName = selectedTargetUser === 'sanzhar' ? 'Санжару' : 'Нурику';
+    toast(`${targetName}: ${selectedXpDelta >= 0 ? '+' : ''}${selectedXpDelta} XP`);
     if (reasonInput) reasonInput.value = '';
     scoreModal?.classList.remove('open');
     renderDashboard();
@@ -843,16 +1094,17 @@ function initEvents() {
     if (soundEnabled) playSound('click');
   });
 
-  // Сброс всего прогресса
+  // Сброс личного прогресса
   $('#resetBtn')?.addEventListener('click', async () => {
-    if (confirm('Сбросить весь прогресс (недели, часы, очки XP)?')) {
+    const name = currentUserId === 'sanzhar' ? 'Санжара' : 'Нурика';
+    if (confirm(`Сбросить личный прогресс для ${name} (задачи, недели, очки)?`)) {
       await api.resetAll();
-      toast('Прогресс успешно сброшен');
+      toast('Личный прогресс сброшен');
       renderAll();
     }
   });
 
-  // Горячие клавиши (Space = пауза/старт таймера, если нет фокуса в input)
+  // Пробел = пауза/старт таймера
   window.addEventListener('keydown', e => {
     if (e.code === 'Space' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
       e.preventDefault();
@@ -865,7 +1117,6 @@ function initEvents() {
 async function initApp() {
   loadLocalState();
 
-  // Дата сегодня
   const d = new Date();
   const dateEl = $('#todayDate');
   if (dateEl) {
@@ -877,21 +1128,27 @@ async function initApp() {
   // Проверка соединения с бекендом
   await api.checkServer();
 
+  // Проверка авторизации: если пользователь не выбран, открываем окно входа
+  if (!currentUserId) {
+    openLoginModal(false);
+  } else {
+    updateCurrentUserUI();
+  }
+
   // Загружаем актуальное состояние
   await api.fetchState();
 
   // Первоначальный рендеринг
   renderAll();
 
-  // Периодический пинг сервера (каждые 30 секунд)
+  // Периодическая фоновая синхронизация (каждые 15 секунд)
   setInterval(async () => {
-    const wasOnline = isServerOnline;
     await api.checkServer();
-    if (!wasOnline && isServerOnline) {
+    if (isServerOnline && currentUserId) {
       await api.fetchState();
       renderAll();
     }
-  }, 30000);
+  }, 15000);
 }
 
 // Старт после загрузки DOM

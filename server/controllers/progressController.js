@@ -4,7 +4,8 @@ export const progressController = {
   async getState(req, res) {
     try {
       const today = req.query.date || new Date().toISOString().slice(0, 10);
-      const state = await repository.getFullState(today);
+      const userId = req.query.userId || req.headers['x-user-id'] || 'nurik';
+      const state = await repository.getFullState(userId, today);
       res.json({ success: true, data: state });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -13,8 +14,9 @@ export const progressController = {
 
   async updateLevel(req, res) {
     try {
-      const { level } = req.body;
-      const newLevel = await repository.updateLevel(level);
+      const { level, userId } = req.body;
+      const targetUser = userId || req.headers['x-user-id'] || 'nurik';
+      const newLevel = await repository.updateLevel(targetUser, level);
       res.json({ success: true, level: newLevel });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -23,8 +25,9 @@ export const progressController = {
 
   async addHours(req, res) {
     try {
-      const { hours } = req.body;
-      const totalHours = await repository.addHours(hours);
+      const { hours, userId } = req.body;
+      const targetUser = userId || req.headers['x-user-id'] || 'nurik';
+      const totalHours = await repository.addHours(targetUser, hours);
       res.json({ success: true, hours: totalHours });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -33,11 +36,11 @@ export const progressController = {
 
   async reset(req, res) {
     try {
-      const state = await repository.resetAll();
+      const { userId } = req.body;
+      const state = await repository.resetAll(userId);
       res.json({ success: true, data: state });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }
   }
 };
-

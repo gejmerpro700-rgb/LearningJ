@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,12 +8,9 @@
   <title>Java League — Путь до Junior Java Developer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
   <div class="app-shell">
     <!-- Десктопный сайдбар -->
@@ -26,8 +22,19 @@
         </div>
         <div class="brand-text">
           <strong>Java League</strong>
-          <span>2 друга · 1 цель</span>
+          <span>Нурик &amp; Санжар</span>
         </div>
+      </div>
+
+      <!-- Карточка текущего вошедшего пользователя -->
+      <div class="sidebar-user-card" id="sidebarUserCard">
+        <div class="sidebar-user-avatar" id="sidebarUserAvatar">Н</div>
+        <div class="sidebar-user-info">
+          <span class="user-role-label">АКТИВНЫЙ ПРОФИЛЬ</span>
+          <strong id="sidebarUserName">Нурик</strong>
+          <span class="sidebar-user-xp" id="sidebarUserXp">0 XP</span>
+        </div>
+        <button class="icon-btn-mini" id="switchUserSidebarBtn" title="Сменить пользователя">⇄</button>
       </div>
 
       <nav class="sidebar-nav">
@@ -107,7 +114,7 @@
 
     <!-- Основное содержимое -->
     <main class="main">
-      <!-- Мобильный / Десктопный верхний бар -->
+      <!-- Верхний бар -->
       <header class="topbar">
         <div class="topbar-left">
           <div class="mobile-brand">
@@ -124,9 +131,20 @@
         </div>
 
         <div class="top-actions">
+          <!-- Кнопка выбора/смены пользователя в шапке -->
+          <button class="user-chip-btn" id="openUserModalBtn" title="Нажмите, чтобы сменить пользователя">
+            <div class="user-chip-avatar" id="topUserAvatar">Н</div>
+            <div class="user-chip-meta">
+              <strong id="topUserName">Нурик</strong>
+              <span id="topUserXp">0 XP</span>
+            </div>
+            <span class="user-chip-arrow">⇄</span>
+          </button>
+
           <button class="icon-btn" id="soundToggleBtn" title="Звук таймера">
             <span id="soundIcon">🔊</span>
           </button>
+
           <button class="ghost-btn" id="resetBtn" title="Сбросить прогресс">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -134,6 +152,7 @@
             </svg>
             <span>Сброс</span>
           </button>
+
           <button class="primary-btn focus-action-btn" id="focusBtn">
             <span class="btn-play-icon">▶</span>
             <span id="focusBtnText">Начать 2 часа</span>
@@ -148,10 +167,10 @@
           <div class="hero-content">
             <div class="hero-badge-row">
               <span class="pill gold-pill">С нуля → Junior Java Developer</span>
-              <span class="pill glass-pill" id="heroStreak">🔥 45 недель фокуса</span>
+              <span class="pill user-pill" id="heroUserPill">👤 Профиль: <b>Нурик</b></span>
             </div>
             <h2>Учитесь вместе.<br><span class="gradient-text">Стройте руками.</span></h2>
-            <p>2 часа в день · реальный проект каждую неделю · code review друг друга · честный счетчик XP.</p>
+            <p>2 часа в день · реальный проект каждую неделю · code review друг друга · честный баттл XP.</p>
             <div class="hero-actions">
               <button class="primary-btn hero-btn" data-goto="weeks">Перейти к неделям →</button>
               <button class="ghost-btn hero-btn" id="openTimerOverlayBtn">⏱ Фокус-режим</button>
@@ -167,11 +186,11 @@
               </div>
               <pre><code><span class="kwd">public class</span> <span class="cls">JavaLeague</span> {
   <span class="kwd">public static void</span> <span class="mtd">main</span>(String[] args) {
-    Developer you = <span class="kwd">new</span> <span class="cls">Developer</span>();
-    <span class="kwd">while</span> (!you.<span class="mtd">isJuniorReady</span>()) {
+    Developer you = <span class="kwd">new</span> <span class="cls">Developer</span>(<span class="str">"Junior"</span>);
+    <span class="kwd">while</span> (!you.<span class="mtd">isReadyForOffer</span>()) {
       you.<span class="mtd">codeDaily</span>(Hours.<span class="cst">TWO</span>);
       you.<span class="mtd">buildWeeklyProject</span>();
-      you.<span class="mtd">explainToFriend</span>();
+      you.<span class="mtd">codeReviewWithPartner</span>();
     }
   }
 }</code></pre>
@@ -202,7 +221,7 @@
               </svg>
             </div>
             <div class="stat-meta">
-              <span>Пройдено</span>
+              <span>Пройдено вами</span>
               <strong id="completedWeeks">0 / 45</strong>
               <small id="completionPercentage">0% выполнено</small>
             </div>
@@ -219,7 +238,7 @@
               </svg>
             </div>
             <div class="stat-meta">
-              <span>Общее время</span>
+              <span>Ваше время</span>
               <strong id="studyHours">0 ч</strong>
               <small>инвестировано в код</small>
             </div>
@@ -228,15 +247,13 @@
           <div class="stat-card">
             <div class="stat-icon-wrap purple">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                </polygon>
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
             </div>
             <div class="stat-meta">
-              <span>Очки Java League</span>
+              <span>Ваши очки XP</span>
               <strong id="totalPoints">0 XP</strong>
-              <small id="scoreDiffStatus">Вровень с другом</small>
+              <small id="scoreDiffStatus">Вровень с соперником</small>
             </div>
           </div>
         </div>
@@ -245,7 +262,7 @@
         <div class="section-head">
           <div>
             <h3>Активный спринт недели</h3>
-            <p>Не просто заучивай синтаксис — собери готовый мини-проект.</p>
+            <p>Закрепляй тему практикой — сдай проект в свой личный профиль.</p>
           </div>
           <button class="text-btn" data-goto="roadmap">Весь роадмап →</button>
         </div>
@@ -260,8 +277,8 @@
           <div class="panel">
             <div class="section-head compact">
               <div>
-                <h3>Сегодня: 2 часа практики</h3>
-                <p>Выполняй поэтапно каждый день</p>
+                <h3>Сегодня: ваши 2 часа</h3>
+                <p>Отмечайте свои личные успехи за день</p>
               </div>
               <span class="timer-badge" id="timerDisplay">02:00:00</span>
             </div>
@@ -296,7 +313,7 @@
               <div class="daily-row" data-task-row="review">
                 <div class="daily-time">30 мин</div>
                 <div class="daily-info">
-                  <b>Синхрон с другом</b>
+                  <b>Синхрон и разбор</b>
                   <span>Объяснить код и разобрать ошибки</span>
                 </div>
                 <button class="check-btn" data-task="review" aria-label="Отметить ревью">
@@ -312,8 +329,8 @@
           <div class="panel">
             <div class="section-head compact">
               <div>
-                <h3>Шкала понимания 0–5</h3>
-                <p>Оцени готовность по текущей теме</p>
+                <h3>Ваша шкала понимания (0–5)</h3>
+                <p>Оцените уверенность по текущей теме</p>
               </div>
               <div class="skill-result-pill"><span id="skillLevel">0</span> / 5</div>
             </div>
@@ -337,7 +354,7 @@
               </button>
               <button data-level="4" class="skill-btn">
                 <b>4</b>
-                <span>Объясню другу</span>
+                <span>Объясню</span>
               </button>
               <button data-level="5" class="skill-btn">
                 <b>5</b>
@@ -400,8 +417,8 @@
       <section id="scores" class="page">
         <div class="section-head">
           <div>
-            <h2>Java League XP Battle</h2>
-            <p>Дружеское соревнование, мотивирующее не забрасывать учёбу.</p>
+            <h2>Нурик vs Санжар — Битва за оффер</h2>
+            <p>Каждый управляет своим XP со своего устройства в общей таблице.</p>
           </div>
           <button class="primary-btn" id="openScoreModalBtn">+ Добавить XP</button>
         </div>
@@ -413,60 +430,62 @@
               <span class="live-tag">LIVE XP</span>
             </div>
 
-            <div class="player-card you">
+            <!-- Карточка Нурика -->
+            <div class="player-card" id="cardNurik">
               <div class="player-avatar-wrap">
-                <div class="avatar you-avatar">Я</div>
-                <div class="avatar-badge">YOU</div>
+                <div class="avatar nurik-avatar">Н</div>
+                <div class="avatar-badge" id="nurikBadge">NURIK</div>
               </div>
               <div class="player-details">
                 <div class="player-name-row">
-                  <b>Ты</b>
-                  <span class="player-status" id="youStatusLabel">Лидируешь</span>
+                  <b id="nurikNameLabel">Нурик</b>
+                  <span class="player-status" id="nurikStatusLabel">—</span>
                 </div>
                 <div class="player-xp-bar">
-                  <div class="xp-fill you-fill" id="youBarFill"></div>
+                  <div class="xp-fill nurik-fill" id="nurikBarFill"></div>
                 </div>
-                <small>Личный прогресс по роадмапу</small>
+                <small id="nurikSubText">Прогресс по роадмапу</small>
               </div>
               <div class="player-score">
-                <strong id="youScore">0</strong>
+                <strong id="nurikScore">0</strong>
                 <span>XP</span>
               </div>
             </div>
 
-            <div class="player-card friend">
+            <!-- Карточка Санжара -->
+            <div class="player-card" id="cardSanzhar">
               <div class="player-avatar-wrap">
-                <div class="avatar friend-avatar">Д</div>
-                <div class="avatar-badge">FRIEND</div>
+                <div class="avatar sanzhar-avatar">С</div>
+                <div class="avatar-badge" id="sanzharBadge">SANZHAR</div>
               </div>
               <div class="player-details">
                 <div class="player-name-row">
-                  <b>Друг</b>
-                  <span class="player-status" id="friendStatusLabel">Второй пилот</span>
+                  <b id="sanzharNameLabel">Санжар</b>
+                  <span class="player-status" id="sanzharStatusLabel">—</span>
                 </div>
                 <div class="player-xp-bar">
-                  <div class="xp-fill friend-fill" id="friendBarFill"></div>
+                  <div class="xp-fill sanzhar-fill" id="sanzharBarFill"></div>
                 </div>
-                <small>Очки за проекты и задачи</small>
+                <small id="sanzharSubText">Прогресс по роадмапу</small>
               </div>
               <div class="player-score">
-                <strong id="friendScore">0</strong>
+                <strong id="sanzharScore">0</strong>
                 <span>XP</span>
               </div>
             </div>
 
             <div class="quick-xp-actions">
-              <span class="quick-actions-title">Быстрое начисление:</span>
+              <span class="quick-actions-title">Быстрое начисление (в ваш аккаунт):</span>
               <div class="quick-btn-group">
-                <button class="ghost-btn quick-xp" data-player="you" data-add="10">+10 Дневной план</button>
-                <button class="ghost-btn quick-xp" data-player="you" data-add="30">+30 Мини-проект</button>
-                <button class="ghost-btn quick-xp" data-player="friend" data-add="10">+10 Другу (задача)</button>
-                <button class="ghost-btn quick-xp" data-player="friend" data-add="30">+30 Другу (проект)</button>
+                <button class="ghost-btn quick-xp" data-add="10">+10 Дневной план</button>
+                <button class="ghost-btn quick-xp" data-add="30">+30 Сдал проект</button>
+                <button class="ghost-btn quick-xp" data-add="5">+5 Доп. задача</button>
+                <button class="ghost-btn quick-xp danger" data-add="-30">−30 Штраф (списал)</button>
               </div>
             </div>
 
             <div class="score-history-wrap">
-              <h4>История начислений</h4>
+              <h4>История начислений (общая)</h4>
               <div class="history-list" id="scoreHistoryList">
                 <!-- Заполняется динамически -->
               </div>
@@ -477,31 +496,14 @@
             <h3>Кодекс очков Java League</h3>
             <p class="panel-subtitle">Очки начисляются за реальные действия, ведущие к прогрессу.</p>
             <ul class="points-rule-list">
-              <li>
-                <div class="rule-title">Выполнил дневные 2 часа</div><span class="xp-badge plus">+10 XP</span>
-              </li>
-              <li>
-                <div class="rule-title">Дополнительная сложная задача</div><span class="xp-badge plus">+5 XP</span>
-              </li>
-              <li>
-                <div class="rule-title">Объяснил тему и код другу</div><span class="xp-badge plus">+10 XP</span>
-              </li>
-              <li>
-                <div class="rule-title">Завершил недельный мини-проект</div><span class="xp-badge plus">+30 XP</span>
-              </li>
-              <li>
-                <div class="rule-title">Сдал проект раньше воскресенья</div><span class="xp-badge plus">+10 XP</span>
-              </li>
-              <li>
-                <div class="rule-title">Нашел баг на код-ревью друга</div><span class="xp-badge plus">+5 XP</span>
-              </li>
-              <li class="penalty">
-                <div class="rule-title">Списал готовый проект</div><span class="xp-badge minus">−30 XP</span>
-              </li>
-              <li class="penalty">
-                <div class="rule-title">Нейросеть написала всё без понимания</div><span class="xp-badge minus">−50
-                  XP</span>
-              </li>
+              <li><div class="rule-title">Выполнил дневные 2 часа</div><span class="xp-badge plus">+10 XP</span></li>
+              <li><div class="rule-title">Дополнительная сложная задача</div><span class="xp-badge plus">+5 XP</span></li>
+              <li><div class="rule-title">Объяснил тему другу</div><span class="xp-badge plus">+10 XP</span></li>
+              <li><div class="rule-title">Завершил недельный мини-проект</div><span class="xp-badge plus">+30 XP</span></li>
+              <li><div class="rule-title">Сдал проект раньше дедлайна</div><span class="xp-badge plus">+10 XP</span></li>
+              <li><div class="rule-title">Нашел баг на код-ревью друга</div><span class="xp-badge plus">+5 XP</span></li>
+              <li class="penalty"><div class="rule-title">Списал готовый проект</div><span class="xp-badge minus">−30 XP</span></li>
+              <li class="penalty"><div class="rule-title">Нейросеть написала всё без понимания</div><span class="xp-badge minus">−50 XP</span></li>
             </ul>
           </div>
         </div>
@@ -524,14 +526,12 @@
           <article class="rule-card">
             <div class="rule-num">02</div>
             <h3>Проект каждую неделю</h3>
-            <p>Знание синтаксиса без готового кода бесполезно. Каждая неделя должна оканчиваться коммитом работающей
-              программы.</p>
+            <p>Знание синтаксиса без готового кода бесполезно. Каждая неделя должна оканчиваться коммитом работающей программы.</p>
           </article>
           <article class="rule-card">
             <div class="rule-num">03</div>
             <h3>Метод Фейнмана</h3>
-            <p>Если ты не можешь объяснить написанный код своими словами за 2 минуты, значит концепция еще не усвоена.
-            </p>
+            <p>Если ты не можешь объяснить написанный код своими словами за 2 минуты, значит концепция еще не усвоена.</p>
           </article>
           <article class="rule-card">
             <div class="rule-num">04</div>
@@ -599,6 +599,51 @@
     </button>
   </nav>
 
+  <!-- МОДАЛЬНОЕ ОКНО: ВХОД / ВЫБОР ПОЛЬЗОВАТЕЛЯ -->
+  <div class="modal-overlay login-overlay" id="loginModal">
+    <div class="modal-card login-modal-card">
+      <button class="modal-close" id="closeLoginModalBtn" style="display: none;">&times;</button>
+      <div class="login-header">
+        <div class="brand-mark mini login-logo">J</div>
+        <span class="pill gold-pill">Вход в Java League</span>
+        <h2>Кто заходит учиться?</h2>
+        <p>Выберите свой профиль или введите имя. У Нурика и Санжара раздельный прогресс недель, задач и XP!</p>
+      </div>
+
+      <div class="profile-cards-grid">
+        <div class="profile-select-card" data-select-user="nurik">
+          <div class="profile-select-avatar nurik-avatar">Н</div>
+          <div class="profile-select-info">
+            <h3>Нурик</h3>
+            <span class="profile-select-sub">Личный спринт и задачи</span>
+            <div class="profile-select-xp"><span id="loginNurikXp">0</span> XP</div>
+          </div>
+          <button type="button" class="primary-btn profile-enter-btn">Войти как Нурик ➜</button>
+        </div>
+
+        <div class="profile-select-card" data-select-user="sanzhar">
+          <div class="profile-select-avatar sanzhar-avatar">С</div>
+          <div class="profile-select-info">
+            <h3>Санжар</h3>
+            <span class="profile-select-sub">Личный спринт и задачи</span>
+            <div class="profile-select-xp"><span id="loginSanzharXp">0</span> XP</div>
+          </div>
+          <button type="button" class="primary-btn profile-enter-btn">Войти как Санжар ➜</button>
+        </div>
+      </div>
+
+      <div class="login-divider"><span>или введите имя</span></div>
+
+      <form class="login-form" id="loginForm">
+        <div class="login-input-row">
+          <input type="text" id="loginNameInput" placeholder="Напишите 'Нурик' или 'Санжар'..." autocomplete="off">
+          <button type="submit" class="primary-btn" id="loginSubmitBtn">Войти</button>
+        </div>
+        <div class="login-error" id="loginError"></div>
+      </form>
+    </div>
+  </div>
+
   <!-- Модальное окно фокус-таймера -->
   <div class="modal-overlay" id="timerModal">
     <div class="modal-card timer-modal-card">
@@ -610,7 +655,7 @@
       </div>
 
       <div class="timer-big-display" id="modalTimerDisplay">02:00:00</div>
-
+      
       <div class="timer-modal-controls">
         <button class="primary-btn timer-btn-large" id="modalStartBtn">▶ Старт</button>
         <button class="ghost-btn timer-btn-large" id="modalResetBtn">↺ Сброс</button>
@@ -631,8 +676,8 @@
       <div class="form-group">
         <label>Кому начислить:</label>
         <div class="segmented-control">
-          <button type="button" class="segment-btn active" data-target-user="you">Ты</button>
-          <button type="button" class="segment-btn" data-target-user="friend">Друг</button>
+          <button type="button" class="segment-btn active" data-target-user="nurik">Нурик</button>
+          <button type="button" class="segment-btn" data-target-user="sanzhar">Санжар</button>
         </div>
       </div>
 
@@ -664,5 +709,4 @@
 
   <script src="script.js"></script>
 </body>
-
 </html>

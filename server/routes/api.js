@@ -3,6 +3,7 @@ import { progressController } from '../controllers/progressController.js';
 import { weeksController } from '../controllers/weeksController.js';
 import { scoresController } from '../controllers/scoresController.js';
 import { tasksController } from '../controllers/tasksController.js';
+import { usersController } from '../controllers/usersController.js';
 
 const router = express.Router();
 
@@ -12,9 +13,13 @@ router.get('/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'Java League API',
-    version: '1.0.0'
+    version: '2.0.0'
   });
 });
+
+// Пользователи и вход
+router.get('/users', usersController.getUsers);
+router.post('/login', usersController.login);
 
 // Полное состояние
 router.get('/state', progressController.getState);
@@ -34,4 +39,3 @@ router.get('/scores', scoresController.getHistory);
 router.post('/scores', scoresController.addScore);
 
 export default router;
-

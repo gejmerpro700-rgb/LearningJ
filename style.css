@@ -2253,4 +2253,349 @@ a {
   .focus-timer-mini {
     margin-left: 2px;
   }
+
+  .profile-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
+
+/* ==========================================================================
+   USER PROFILES & LOGIN SCREEN
+   ========================================================================== */
+
+/* Плашка текущего пользователя в сайдбаре */
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-user-card:hover {
+  border-color: var(--border-medium);
+}
+
+.sidebar-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 15px;
+  background: linear-gradient(135deg, var(--accent-gold-light), #d97706);
+  color: #07090e;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+  flex-shrink: 0;
+}
+
+.sidebar-user-avatar.sanzhar {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
+  color: #fff;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-role-label {
+  display: block;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.sidebar-user-info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-xp {
+  display: block;
+  font-size: 11px;
+  color: var(--accent-gold);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.icon-btn-mini {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.icon-btn-mini:hover {
+  background: var(--bg-surface-hover);
+  color: #fff;
+  border-color: var(--border-medium);
+}
+
+/* Кнопка профиля в верхнем баре */
+.user-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.user-chip-btn:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+
+.user-chip-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 11px;
+  background: linear-gradient(135deg, var(--accent-gold-light), #d97706);
+  color: #07090e;
+}
+
+.user-chip-avatar.sanzhar {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  color: #fff;
+}
+
+.user-chip-meta {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.user-chip-meta strong {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.user-chip-meta span {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.user-chip-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.user-pill {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold-light);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+/* Модальное окно авторизации/выбора профиля */
+.login-overlay {
+  z-index: 5000;
+}
+
+.login-modal-card {
+  max-width: 520px;
+  text-align: center;
+}
+
+.login-header {
+  margin-bottom: 24px;
+}
+
+.login-header h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 10px 0 6px;
+}
+
+.login-header p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.profile-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.profile-select-card {
+  background: var(--bg-surface-elevated);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.profile-select-card:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.18);
+}
+
+.profile-select-card[data-select-user="sanzhar"]:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.18);
+}
+
+.profile-select-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.nurik-avatar {
+  background: linear-gradient(135deg, var(--accent-gold-light), #d97706);
+  color: #07090e;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+.sanzhar-avatar {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+}
+
+.profile-select-info h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.profile-select-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.profile-select-xp {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-gold);
+  margin-bottom: 14px;
+}
+
+.profile-select-card[data-select-user="sanzhar"] .profile-select-xp {
+  color: #38bdf8;
+}
+
+.profile-enter-btn {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.profile-select-card[data-select-user="sanzhar"] .profile-enter-btn {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  margin: 18px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.login-divider span {
+  padding: 0 12px;
+}
+
+.login-form {
+  margin-top: 10px;
+}
+
+.login-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.login-input-row input {
+  flex: 1;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  color: #fff;
+  font-size: 13.5px;
+  transition: all var(--transition-fast);
+}
+
+.login-input-row input:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 12px var(--accent-gold-glow);
+}
+
+.login-error {
+  color: var(--accent-danger);
+  font-size: 11.5px;
+  margin-top: 8px;
+  min-height: 16px;
+  text-align: left;
+}
+
+/* Оформление лидерборда для двух участников */
+.player-card.active-user {
+  border: 1.5px solid var(--accent-gold);
+  background: linear-gradient(180deg, var(--bg-surface-elevated), rgba(245, 158, 11, 0.05));
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+}
+
+.nurik-fill { background: var(--accent-gold); }
+.sanzhar-fill { background: #38bdf8; }
