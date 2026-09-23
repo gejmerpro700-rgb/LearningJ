@@ -29,8 +29,8 @@ let isServerOnline = false;
 let soundEnabled = true;
 
 // Web Audio API синтезатор звуковых эффектов
-const audioCtx = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext) 
-  ? new (window.AudioContext || window.webkitAudioContext)() 
+const audioCtx = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)
+  ? new (window.AudioContext || window.webkitAudioContext)()
   : null;
 
 function playSound(type) {
@@ -573,8 +573,8 @@ function renderRoadmap() {
         </div>
         <div class="stage-weeks">
           ${stageWeeks.map(w => {
-            const isDone = state.completed.includes(w.n);
-            return `
+      const isDone = state.completed.includes(w.n);
+      return `
               <div class="mini-week ${isDone ? 'done' : ''}">
                 <div class="mini-week-top">
                   <b>Неделя ${w.n}</b>
@@ -584,7 +584,7 @@ function renderRoadmap() {
                 <span class="mini-week-project">📦 ${w.project}</span>
               </div>
             `;
-          }).join('')}
+    }).join('')}
         </div>
       </article>
     `;
@@ -604,7 +604,7 @@ function renderWeeks() {
   if (!stageFilter || !state.stages.length) return;
 
   const currentVal = stageFilter.value || 'all';
-  stageFilter.innerHTML = '<option value="all">Все этапы (0–10)</option>' + 
+  stageFilter.innerHTML = '<option value="all">Все этапы (0–10)</option>' +
     state.stages.map(s => `<option value="${s.n}">Этап ${s.n} — ${s.name}</option>`).join('');
   stageFilter.value = currentVal;
 
@@ -614,9 +614,9 @@ function renderWeeks() {
 
     const filtered = state.weeks.filter(w => {
       const matchStage = filter === 'all' || String(w.stage) === filter;
-      const matchSearch = !search || 
-        w.title.toLowerCase().includes(search) || 
-        w.topic.toLowerCase().includes(search) || 
+      const matchSearch = !search ||
+        w.title.toLowerCase().includes(search) ||
+        w.topic.toLowerCase().includes(search) ||
         w.project.toLowerCase().includes(search);
       return matchStage && matchSearch;
     });

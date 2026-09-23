@@ -14,12 +14,12 @@ export async function initPostgres() {
     const poolConfig = config.db.url
       ? { connectionString: config.db.url, ssl: config.db.url.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined }
       : {
-          host: config.db.host,
-          port: config.db.port,
-          user: config.db.user,
-          password: config.db.password,
-          database: config.db.database,
-        };
+        host: config.db.host,
+        port: config.db.port,
+        user: config.db.user,
+        password: config.db.password,
+        database: config.db.database,
+      };
 
     pgPool = new Pool(poolConfig);
 
